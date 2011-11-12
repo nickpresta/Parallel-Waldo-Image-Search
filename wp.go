@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 )
 
 // Set up command-line flags
@@ -20,7 +21,12 @@ func main() {
 	}
 	fmt.Println("Waldo Dir has value:", *waldoDir)
 	fmt.Println("Target Dir has value:", *targetDir)
-	fmt.Println("Number of processors:", *numProcs)
+	fmt.Println("Current number of processors:", runtime.GOMAXPROCS(0))
+	fmt.Println("Number of processors requested:", *numProcs)
+
+	runtime.GOMAXPROCS(*numProcs)
+
+	fmt.Println("New number of processors:", runtime.GOMAXPROCS(0))
 
 	// Read Waldo Directory
 	waldoImages := TraverseDirectory(*waldoDir, ReadFileContents)
