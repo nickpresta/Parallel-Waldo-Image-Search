@@ -4,8 +4,8 @@ GOFMT=gofmt -w -tabindent -tabwidth=8
 
 TARG=wp
 GOFILES=\
-				wplib.go\
-				wp.go
+	wplib.go\
+	wp.go
 
 include $(GOROOT)/src/Make.cmd
 
