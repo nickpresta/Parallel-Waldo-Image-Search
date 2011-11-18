@@ -38,7 +38,7 @@ func (this *waldoImage) Rotate() (img waldoImage) {
 	return
 }
 
-func ReadFileContents(file *os.File) (img *waldoImage) {
+func Read(file *os.File) (img *waldoImage) {
 	reader, err := bufio.NewReaderSize(file, 6*1024)
 	if err != nil {
 		fmt.Println(err)
@@ -73,7 +73,7 @@ func ReadFileContents(file *os.File) (img *waldoImage) {
 	return
 }
 
-func OpenFile(filePath string, callback func(file *os.File) *waldoImage) *waldoImage {
+func ReadFile(filePath string) *waldoImage {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println(err)
@@ -81,10 +81,10 @@ func OpenFile(filePath string, callback func(file *os.File) *waldoImage) *waldoI
 	}
 	defer file.Close()
 
-	return callback(file)
+	return Read(file)
 }
 
-func TraverseDirectory(directory string, callback func(file *os.File) *waldoImage) (images []*waldoImage) {
+func ReadDirectory(directory string) (images []*waldoImage) {
 	dirContents, err := os.Open(directory)
 	if err != nil {
 		fmt.Println(err)
@@ -98,13 +98,28 @@ func TraverseDirectory(directory string, callback func(file *os.File) *waldoImag
 		return nil
 	}
 
-	for _, file := range file {
+	// Channel to pass along waldoImages (used in reading file contents)
+	ch := make(chan *waldoImage)
+
+	var numImages int
+	for index, file := range file {
 		if file.IsRegular() {
-			path, _ := filepath.Abs(filepath.Join(directory, file.Name))
-			image := OpenFile(path, callback)
-			if image != nil {
-				images = append(images, image)
+			// Create named function for goroutine
+			processFile := func (file os.FileInfo) {
+				path, _ := filepath.Abs(filepath.Join(directory, file.Name))
+				image := ReadFile(path)
+				ch <- image
 			}
+			go processFile(file)
+		}
+		numImages = index
+	}
+
+	// Collect images and store them
+	for i := 0; i <= numImages; i++ {
+		image := <-ch
+		if image != nil {
+			images = append(images, image)
 		}
 	}
 

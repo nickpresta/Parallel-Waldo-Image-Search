@@ -29,14 +29,14 @@ func main() {
 	fmt.Println("New number of processors:", runtime.GOMAXPROCS(0))
 
 	// Read Waldo Directory
-	waldoImages := TraverseDirectory(*waldoDir, ReadFileContents)
+	waldoImages := ReadDirectory(*waldoDir)
 	for _, image := range waldoImages {
 		fmt.Println("Image:", image)
 		fmt.Println("Image (Rotated):", image.Rotate())
 	}
 
 	// Read Target Directory
-	targetImages := TraverseDirectory(*targetDir, ReadFileContents)
+	targetImages := ReadDirectory(*targetDir)
 	for _, image := range targetImages {
 		fmt.Println("Image:", image)
 	}
