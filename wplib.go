@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type image struct {
+type waldoImage struct {
 	height   int
 	width    int
 	rotation int
@@ -17,14 +17,35 @@ type image struct {
 	data     []string
 }
 
-func ReadFileContents(file *os.File) (img *image) {
+type Image interface {
+	Rotate() Image
+}
+
+// Rotate rotates a waldoImage by 90 degrees to the right
+// Returns a new waldoImage
+func (this *waldoImage) Rotate() (img waldoImage) {
+	img.height = this.width
+	img.width = this.height
+	img.fileName = this.fileName
+	img.data = make([]string, img.height)
+	for i := 0; i < img.height; i++ {
+		var line []uint8 = make([]uint8, img.width)
+		for j := 0; j < img.width; j++ {
+			line[j] = this.data[img.width - j - 1][i]
+		}
+		img.data[i] = string(line)
+	}
+	return
+}
+
+func ReadFileContents(file *os.File) (img *waldoImage) {
 	reader, err := bufio.NewReaderSize(file, 6*1024)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
 
-	img = new(image)
+	img = new(waldoImage)
 
 	img.fileName = filepath.Base(file.Name())
 
@@ -52,7 +73,7 @@ func ReadFileContents(file *os.File) (img *image) {
 	return
 }
 
-func OpenFile(filePath string, callback func(file *os.File) *image) *image {
+func OpenFile(filePath string, callback func(file *os.File) *waldoImage) *waldoImage {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println(err)
@@ -63,7 +84,7 @@ func OpenFile(filePath string, callback func(file *os.File) *image) *image {
 	return callback(file)
 }
 
-func TraverseDirectory(directory string, callback func(file *os.File) *image) (images []*image) {
+func TraverseDirectory(directory string, callback func(file *os.File) *waldoImage) (images []*waldoImage) {
 	dirContents, err := os.Open(directory)
 	if err != nil {
 		fmt.Println(err)

@@ -32,6 +32,7 @@ func main() {
 	waldoImages := TraverseDirectory(*waldoDir, ReadFileContents)
 	for _, image := range waldoImages {
 		fmt.Println("Image:", image)
+		fmt.Println("Image (Rotated):", image.Rotate())
 	}
 
 	// Read Target Directory
