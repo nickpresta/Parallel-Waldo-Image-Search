@@ -131,13 +131,7 @@ func ReadDirectory(directory string) (images []*Image) {
 	return
 }
 
-func printImage(waldo *Image) {
-	for i := 0; i < waldo.height; i++ {
-		fmt.Println(waldo.data[i])
-	}
-}
-
-func (this *Image) FindImages(images []*Image) {
+func (this *Image) FindImages(images []*Image, done chan bool) {
 	// this is the target image
 	rotations := []int{0, 90, 180, 270}
 	// For each waldo
@@ -154,6 +148,7 @@ func (this *Image) FindImages(images []*Image) {
 			}
 		}
 	}
+	done <- true
 }
 
 func (this *Image) FindImage(image *Image) bool {

@@ -51,7 +51,13 @@ func main() {
 
 	// Spawn worker threads with directory data
 	// This should be using goroutines
+	done := make(chan bool, len(targetImages))
 	for i := 0; i < len(targetImages); i++ {
-		targetImages[i].FindImages(waldoImages)
+		go targetImages[i].FindImages(waldoImages, done)
+	}
+
+	// Drain channel
+	for i := 0; i < len(targetImages); i++ {
+		<-done
 	}
 }
