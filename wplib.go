@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-type waldoImage struct {
+type Image struct {
 	height   int
 	width    int
 	rotation int
@@ -17,35 +18,39 @@ type waldoImage struct {
 	data     []string
 }
 
-type Image interface {
-	Rotate() Image
+type Image2D interface {
+	Rotate() *Image2D
+	findImage(image *Image) bool
+	findImages(images []*Image)
 }
 
-// Rotate rotates a waldoImage by 90 degrees to the right
-// Returns a new waldoImage
-func (this *waldoImage) Rotate() (img waldoImage) {
+// Rotate rotates a Image by 90 degrees to the right
+// Returns a new Image
+func (this *Image) Rotate() *Image {
+	var img = new(Image)
 	img.height = this.width
 	img.width = this.height
 	img.fileName = this.fileName
 	img.data = make([]string, img.height)
 	for i := 0; i < img.height; i++ {
+		// Possible case for goroutine - rotate each line separately
 		var line []uint8 = make([]uint8, img.width)
 		for j := 0; j < img.width; j++ {
 			line[j] = this.data[img.width - j - 1][i]
 		}
 		img.data[i] = string(line)
 	}
-	return
+	return img
 }
 
-func Read(file *os.File) (img *waldoImage) {
+func Read(file *os.File) (img *Image) {
 	reader, err := bufio.NewReaderSize(file, 6*1024)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
 
-	img = new(waldoImage)
+	img = new(Image)
 
 	img.fileName = filepath.Base(file.Name())
 
@@ -73,7 +78,7 @@ func Read(file *os.File) (img *waldoImage) {
 	return
 }
 
-func ReadFile(filePath string) *waldoImage {
+func ReadFile(filePath string) *Image {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println(err)
@@ -84,7 +89,7 @@ func ReadFile(filePath string) *waldoImage {
 	return Read(file)
 }
 
-func ReadDirectory(directory string) (images []*waldoImage) {
+func ReadDirectory(directory string) (images []*Image) {
 	dirContents, err := os.Open(directory)
 	if err != nil {
 		fmt.Println(err)
@@ -98,10 +103,10 @@ func ReadDirectory(directory string) (images []*waldoImage) {
 		return nil
 	}
 
-	// Channel to pass along waldoImages (used in reading file contents)
-	ch := make(chan *waldoImage)
+	// Channel to pass along Images (used in reading file contents)
+	ch := make(chan *Image)
 
-	var numImages int
+	var numImage2Ds int
 	for index, file := range file {
 		if file.IsRegular() {
 			// Create named function for goroutine
@@ -112,16 +117,81 @@ func ReadDirectory(directory string) (images []*waldoImage) {
 			}
 			go processFile(file)
 		}
-		numImages = index
+		numImage2Ds = index
 	}
 
 	// Collect images and store them
-	for i := 0; i <= numImages; i++ {
+	for i := 0; i <= numImage2Ds; i++ {
 		image := <-ch
 		if image != nil {
 			images = append(images, image)
 		}
 	}
 
+	return
+}
+
+func (this *Image) FindImages(images []*Image) {
+	// this is the target image
+	rotations := []int{0, 90, 180, 270}
+	// For each waldo
+	for i := 0; i < len(images); i++ {
+		waldo := images[i]
+		// For each rotation
+		for j := 0; j < 4; j++ {
+			waldo.rotation = rotations[j]
+			found := this.FindImage(waldo)
+			if !found {
+				waldo = waldo.Rotate()
+			} else {
+				break;
+			}
+		}
+	}
+}
+
+func (this *Image) FindImage(image *Image) bool {
+	for i := 0; i < this.height; i++ {
+		needle, _ := regexp.Compile(image.data[0])
+		haystack := this.data[i]
+		allMatches := needle.FindAllStringIndex(haystack, -1)
+		for _, match := range allMatches {
+			foundCol := match[0]
+			// Start descent through image
+			numRows := 1
+			found := false
+			for j := 1;
+				j < image.height && j < this.height &&
+				j + i < this.height;
+				j, numRows = j+1, numRows+1 {
+				// Check each starting position for the substring match
+				substr := this.data[i + j][foundCol:foundCol + image.width]
+				if substr == image.data[j] {
+					found = true
+				} else {
+					break
+				}
+			}
+			if found && numRows == image.height {
+				y, x := formatCoords(i, foundCol, image)
+				fmt.Printf("$%s %s (%d,%d,%d)\n", image.fileName, this.fileName, y, x, image.rotation)
+				return true
+			}
+		}
+	}
+	return true
+}
+
+func formatCoords(y int, x int, image *Image) (newY int, newX int) {
+	switch image.rotation {
+		case 90:
+			return y, x + image.width
+		case 180:
+			return y + image.height, x + image.width
+		case 270:
+			return y + image.height, x
+		default: // For a 0deg rotation
+			return y + 1, x + 1
+	}
 	return
 }

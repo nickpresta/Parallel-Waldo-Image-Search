@@ -23,21 +23,17 @@ func main() {
 	fmt.Println("Target Dir has value:", *targetDir)
 	fmt.Println("Current number of processors:", runtime.GOMAXPROCS(0))
 	fmt.Println("Number of processors requested:", *numProcs)
-
 	runtime.GOMAXPROCS(*numProcs)
-
 	fmt.Println("New number of processors:", runtime.GOMAXPROCS(0))
 
 	// Read Waldo Directory
 	waldoImages := ReadDirectory(*waldoDir)
-	for _, image := range waldoImages {
-		fmt.Println("Image:", image)
-		fmt.Println("Image (Rotated):", image.Rotate())
-	}
-
 	// Read Target Directory
 	targetImages := ReadDirectory(*targetDir)
-	for _, image := range targetImages {
-		fmt.Println("Image:", image)
+
+	// Spawn worker threads with directory data
+	// This should be using goroutines
+	for i := 0; i < len(targetImages); i++ {
+		targetImages[i].FindImages(waldoImages)
 	}
 }
