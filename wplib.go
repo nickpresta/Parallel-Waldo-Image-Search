@@ -14,7 +14,7 @@ import (
 
 type imageLine struct {
 	position int
-	line string
+	line     string
 }
 
 type Image struct {
@@ -44,7 +44,7 @@ func (this *Image) Rotate() *Image {
 		rotateLine := func(lineNo int, imageWidth int, data []string, outchan chan imageLine) {
 			var line []uint8 = make([]uint8, imageWidth)
 			for j := 0; j < imageWidth; j++ {
-				line[j] = data[imageWidth - j - 1][lineNo]
+				line[j] = data[imageWidth-j-1][lineNo]
 			}
 			var out imageLine
 			out.position = lineNo
@@ -129,7 +129,7 @@ func ReadDirectory(directory string) (images []*Image) {
 	for index, file := range file {
 		if file.IsRegular() {
 			// Create named function for goroutine
-			processFile := func (file os.FileInfo) {
+			processFile := func(file os.FileInfo) {
 				path, _ := filepath.Abs(filepath.Join(directory, file.Name))
 				image := ReadFile(path)
 				ch <- image
@@ -190,10 +190,8 @@ func (this *Image) FindImage(image *Image) bool {
 			// Start descent through image
 			numRows := 1
 			found := false
-			for j := 1;
-				j < image.height && j < this.height &&
-				j + i < this.height;
-				j, numRows = j+1, numRows+1 {
+			for j := 1; j < image.height && j < this.height &&
+				j+i < this.height; j, numRows = j+1, numRows+1 {
 				// Check each starting position for the substring match
 				substr := this.data[i + j][foundCol:foundCol + image.width]
 				if substr == image.data[j] {
@@ -214,14 +212,14 @@ func (this *Image) FindImage(image *Image) bool {
 
 func formatCoords(y int, x int, image *Image) (newY int, newX int) {
 	switch image.rotation {
-		case 90:
-			return y, x + image.width
-		case 180:
-			return y + image.height, x + image.width
-		case 270:
-			return y + image.height, x
-		default: // For a 0deg rotation
-			return y + 1, x + 1
+	case 90:
+		return y, x + image.width
+	case 180:
+		return y + image.height, x + image.width
+	case 270:
+		return y + image.height, x
+	default: // For a 0deg rotation
+		return y + 1, x + 1
 	}
 	return
 }
