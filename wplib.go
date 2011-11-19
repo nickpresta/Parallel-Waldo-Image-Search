@@ -3,12 +3,19 @@ package main
 import (
 	"bufio"
 	"fmt"
+	// Needed for io.EOF - weekly release.
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 )
+
+type imageLine struct {
+	position int
+	line string
+}
 
 type Image struct {
 	height   int
@@ -32,13 +39,25 @@ func (this *Image) Rotate() *Image {
 	img.width = this.height
 	img.fileName = this.fileName
 	img.data = make([]string, img.height)
+	ch := make(chan imageLine, img.height)
 	for i := 0; i < img.height; i++ {
-		// Possible case for goroutine - rotate each line separately
-		var line []uint8 = make([]uint8, img.width)
-		for j := 0; j < img.width; j++ {
-			line[j] = this.data[img.width - j - 1][i]
+		rotateLine := func(lineNo int, imageWidth int, data []string, outchan chan imageLine) {
+			var line []uint8 = make([]uint8, imageWidth)
+			for j := 0; j < imageWidth; j++ {
+				line[j] = data[imageWidth - j - 1][lineNo]
+			}
+			var out imageLine
+			out.position = lineNo
+			out.line = string(line)
+			outchan <- out
 		}
-		img.data[i] = string(line)
+		go rotateLine(i, img.width, this.data, ch)
+	}
+
+	// put lines where they belong
+	for i := 0; i < img.height; i++ {
+		data := <-ch
+		img.data[data.position] = data.line
 	}
 	return img
 }
@@ -70,7 +89,7 @@ func Read(file *os.File) (img *Image) {
 		fmt.Println("Buffer was declared to be too small for file (", file.Name(), ")")
 		return nil
 	}
-	if err != os.EOF {
+	if err != io.EOF {
 		fmt.Println(err)
 		return nil
 	}
@@ -134,20 +153,30 @@ func ReadDirectory(directory string) (images []*Image) {
 func (this *Image) FindImages(images []*Image, done chan bool) {
 	// this is the target image
 	rotations := []int{0, 90, 180, 270}
+	ch := make(chan bool, len(images))
 	// For each waldo
 	for i := 0; i < len(images); i++ {
-		waldo := images[i]
-		// For each rotation
-		for j := 0; j < 4; j++ {
-			waldo.rotation = rotations[j]
-			found := this.FindImage(waldo)
-			if found {
-				break
-			} else {
-				waldo = waldo.Rotate()
+		searchImage := func(index int, images []*Image, ch chan bool) {
+			waldo := images[index]
+			// For each rotation
+			for j := 0; j < 4; j++ {
+				waldo.rotation = rotations[j]
+				found := this.FindImage(waldo)
+				if found {
+					break
+				} else {
+					waldo = waldo.Rotate()
+				}
 			}
+			ch <- true
 		}
+		go searchImage(i, images, ch)
 	}
+
+	for i := 0; i < len(images); i++ {
+		<-ch
+	}
+
 	done <- true
 }
 
