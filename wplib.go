@@ -3,8 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	// Needed for io.EOF - weekly release.
-	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -88,7 +86,7 @@ func Read(file *os.File) (img *Image) {
 		fmt.Println("Buffer was declared to be too small for file (", file.Name(), ")")
 		return nil
 	}
-	if err != io.EOF {
+	if err != os.EOF {
 		fmt.Println(err)
 		return nil
 	}
