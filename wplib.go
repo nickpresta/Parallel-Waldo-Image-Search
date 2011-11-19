@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -182,11 +181,10 @@ func (this *Image) FindImages(images []*Image, done chan bool) {
 
 func (this *Image) FindImage(image *Image) bool {
 	for i := 0; i < this.height; i++ {
-		needle, _ := regexp.Compile(image.data[0])
+		needle := image.data[0]
 		haystack := this.data[i]
-		allMatches := needle.FindAllStringIndex(haystack, -1)
-		for _, match := range allMatches {
-			foundCol := match[0]
+		foundCol := strings.Index(haystack, needle)
+		for foundCol != -1 {
 			// Start descent through image
 			numRows := 1
 			found := false
@@ -205,12 +203,19 @@ func (this *Image) FindImage(image *Image) bool {
 				fmt.Printf("$%s %s (%d,%d,%d)\n", image.fileName, this.fileName, y, x, image.rotation)
 				return true
 			}
+			// Move forward past first found waldo
+			// Find waldo in this slice, add what we skipped over previously
+			previous := foundCol
+			foundCol = strings.Index(haystack[previous+image.width:], needle)
+			if foundCol >= 0 {
+				foundCol = foundCol + previous + image.width
+			}
 		}
 	}
 	return false
 }
 
-func formatCoords(y int, x int, image *Image) (newY int, newX int) {
+func formatCoords(y int, x int, image *Image) (int, int) {
 	switch image.rotation {
 	case 90:
 		return y, x + image.width
@@ -221,5 +226,5 @@ func formatCoords(y int, x int, image *Image) (newY int, newX int) {
 	default: // For a 0deg rotation
 		return y + 1, x + 1
 	}
-	return
+	return y, x
 }
