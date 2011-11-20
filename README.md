@@ -31,3 +31,21 @@ Each match will be printed to STDOUT, in the form:
 Where parfile and imfile are the bare filenames (no directory path) of the parallaldo and its matching image, respectively, and (y,x,r) are bracketed integers printed without extra spaces or leading zeroes.
 
 For (y,x,r) where (y,x) denotes the location in the image of the (unrotated) template's upper left corner, and r being the degrees of clockwise rotation. The convention of the first coordinate being the row (here numbered starting from 1) is normal for graphics and matrix data.
+
+# How to Run
+
+## Compile
+Since this includes the file *kmp.go*, you need to compile it first: `6g kmp.go`.
+
+The rest of this code uses the included tool `gomake`. To compile:
+
+    gomake
+
+This will create a binary named wp.
+
+## To Run
+To run `wp`:
+
+    wp -waldoDir=/path/to/waldo -targetDir=/path/to/target -numProcs=8
+
+This will spit the results to stdout.

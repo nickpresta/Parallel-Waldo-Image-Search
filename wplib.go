@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"./kmp"
 )
 
 type imageLine struct {
@@ -176,11 +178,11 @@ func (this *Image) FindImages(images []*Image, done chan bool) {
 }
 
 func (this *Image) FindImage(image *Image) bool {
-	needle := image.data[0]
+	needle, _ := kmp.NewKMP(image.data[0])
 	for i := 0; i < this.height; i++ {
 		haystack := this.data[i]
-		foundCol := strings.Index(haystack, needle)
-		for foundCol != -1 {
+		foundCols := needle.FindAllStringIndex(haystack)
+		for _, foundCol := range foundCols {
 			// Start descent through image
 			numRows := 1
 			found := false
@@ -198,13 +200,6 @@ func (this *Image) FindImage(image *Image) bool {
 				y, x := formatCoords(i, foundCol, image)
 				fmt.Printf("$%s %s (%d,%d,%d)\n", image.fileName, this.fileName, y, x, image.rotation)
 				return true
-			}
-			// Move forward past first found waldo
-			// Find waldo in this slice, add what we skipped over previously
-			previous := foundCol
-			foundCol = strings.Index(haystack[previous+image.width:], needle)
-			if foundCol >= 0 {
-				foundCol = foundCol + previous + image.width
 			}
 		}
 	}
