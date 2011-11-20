@@ -11,11 +11,6 @@ import (
 	"./kmp"
 )
 
-type imageLine struct {
-	position int
-	line     string
-}
-
 type Image struct {
 	height   int
 	width    int
@@ -38,26 +33,15 @@ func (this *Image) Rotate() *Image {
 	img.width = this.height
 	img.fileName = this.fileName
 	img.data = make([]string, img.height)
-	ch := make(chan imageLine, img.height)
+
 	for i := 0; i < img.height; i++ {
-		rotateLine := func(lineNo int, imageWidth int, data []string, outchan chan imageLine) {
-			var line []uint8 = make([]uint8, imageWidth)
-			for j := 0; j < imageWidth; j++ {
-				line[j] = data[imageWidth-j-1][lineNo]
+			var line []uint8 = make([]uint8, img.width)
+			for j := 0; j < img.width; j++ {
+				line[j] = this.data[img.width-j-1][i]
 			}
-			var out imageLine
-			out.position = lineNo
-			out.line = string(line)
-			outchan <- out
-		}
-		go rotateLine(i, img.width, this.data, ch)
+			img.data[i] = string(line)
 	}
 
-	// put lines where they belong
-	for i := 0; i < img.height; i++ {
-		data := <-ch
-		img.data[data.position] = data.line
-	}
 	return img
 }
 
@@ -119,56 +103,37 @@ func ReadDirectory(directory string) (images []*Image, err os.Error) {
 		return images, err
 	}
 
-	ch := make(chan *Image)
-
-	var numImage2Ds int
-	for index, file := range file {
+	for _, file := range file {
 		if file.IsRegular() {
-			processFile := func(file os.FileInfo) {
-				path, _ := filepath.Abs(filepath.Join(directory, file.Name))
-				image := ReadFile(path)
-				ch <- image
+			// Create named function for goroutine
+			path, _ := filepath.Abs(filepath.Join(directory, file.Name))
+			image := ReadFile(path)
+			if image != nil {
+				images = append(images, image)
 			}
-			go processFile(file)
-		}
-		numImage2Ds = index
-	}
-
-	for i := 0; i <= numImage2Ds; i++ {
-		image := <-ch
-		if image != nil {
-			images = append(images, image)
 		}
 	}
 
 	return
 }
 
-func (this *Image) FindImages(images []*Image, done chan bool) {
+func (this *Image) FindImages(images []*Image) {
+	// this is the target image
 	rotations := []int{0, 90, 180, 270}
-	ch := make(chan bool, len(images))
+	// For each waldo
 	for i := 0; i < len(images); i++ {
-		searchImage := func(index int, images []*Image, ch chan bool) {
-			waldo := images[index]
-			for _, rotation := range rotations {
-				waldo.rotation = rotation
-				found := this.FindImage(waldo)
-				if found {
-					break
-				} else {
-					waldo = waldo.Rotate()
-				}
+		waldo := images[i]
+		// For each rotation
+		for _, rotation := range rotations {
+			waldo.rotation = rotation
+			found := this.FindImage(waldo)
+			if found {
+				break
+			} else {
+				waldo = waldo.Rotate()
 			}
-			ch <- true
 		}
-		go searchImage(i, images, ch)
 	}
-
-	for i := 0; i < len(images); i++ {
-		<-ch
-	}
-
-	done <- true
 }
 
 func (this *Image) FindImage(image *Image) bool {

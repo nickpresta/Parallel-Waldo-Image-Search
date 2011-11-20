@@ -11,7 +11,6 @@ import (
 // Set up command-line flags
 var waldoDir = flag.String("waldoDir", "", "The directory containing waldo images")
 var targetDir = flag.String("targetDir", "", "The directory containing target images")
-var numProcs = flag.Int("numProcs", 16, "The number of processors to use (defaults to 16)")
 
 func main() {
 	startTime := time.Nanoseconds()
@@ -22,7 +21,7 @@ func main() {
 		return
 	}
 
-	runtime.GOMAXPROCS(*numProcs)
+	runtime.GOMAXPROCS(1)
 
 	// Read Waldo Directory
 	waldoImages, err := ReadDirectory(*waldoDir)
@@ -37,14 +36,8 @@ func main() {
 		return
 	}
 
-	done := make(chan bool, len(targetImages))
 	for i := 0; i < len(targetImages); i++ {
-		go targetImages[i].FindImages(waldoImages, done)
-	}
-
-	// Drain channel
-	for i := 0; i < len(targetImages); i++ {
-		<-done
+		targetImages[i].FindImages(waldoImages)
 	}
 
 	fmt.Printf("Completed in %f seconds!\n", float64(time.Nanoseconds() - startTime) / 1000000000.0)
