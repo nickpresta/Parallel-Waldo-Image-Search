@@ -49,3 +49,6 @@ To run `wp`:
     wp -waldoDir=/path/to/waldo -targetDir=/path/to/target -numProcs=8
 
 This will spit the results to stdout.
+
+# Credits
+I'm using the code from https://github.com/paddie/goKMP for KMP searching. Thanks!
