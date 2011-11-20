@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"time"
 )
 
 // Set up command-line flags
@@ -18,6 +19,7 @@ var numProcs = flag.Int("numProcs", 16, "The number of processors to use (defaul
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
+	startTime := time.Nanoseconds()
 	flag.Parse()
 	if *waldoDir == "" || *targetDir == "" {
 		fmt.Println("You need to specify waldo and target directories!")
@@ -61,4 +63,6 @@ func main() {
 	for i := 0; i < len(targetImages); i++ {
 		<-done
 	}
+
+	fmt.Printf("Completed in %f seconds!\n", float64(time.Nanoseconds() - startTime) / 1000000000.0)
 }
