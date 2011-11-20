@@ -43,9 +43,17 @@ func main() {
 	fmt.Println("New number of processors:", runtime.GOMAXPROCS(0))
 
 	// Read Waldo Directory
-	waldoImages := ReadDirectory(*waldoDir)
+	waldoImages, err := ReadDirectory(*waldoDir)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	// Read Target Directory
-	targetImages := ReadDirectory(*targetDir)
+	targetImages, err := ReadDirectory(*targetDir)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	fmt.Println("Waldos:", len(waldoImages), "Targets:", len(targetImages))
 

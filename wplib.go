@@ -105,18 +105,16 @@ func ReadFile(filePath string) *Image {
 	return Read(file)
 }
 
-func ReadDirectory(directory string) (images []*Image) {
+func ReadDirectory(directory string) (images []*Image, err os.Error) {
 	dirContents, err := os.Open(directory)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return images, err
 	}
 	defer dirContents.Close()
 
 	file, err := dirContents.Readdir(-1)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return images, err
 	}
 
 	// Channel to pass along Images (used in reading file contents)
@@ -178,8 +176,8 @@ func (this *Image) FindImages(images []*Image, done chan bool) {
 }
 
 func (this *Image) FindImage(image *Image) bool {
+	needle := image.data[0]
 	for i := 0; i < this.height; i++ {
-		needle := image.data[0]
 		haystack := this.data[i]
 		foundCol := strings.Index(haystack, needle)
 		for foundCol != -1 {
