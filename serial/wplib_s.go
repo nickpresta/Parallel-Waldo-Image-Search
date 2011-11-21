@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"./kmp"
+	"kmp"
 )
 
 type Image struct {
