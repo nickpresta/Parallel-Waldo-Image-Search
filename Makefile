@@ -26,4 +26,3 @@ fmt:
 	gomake -C kmp fmt
 	gomake -C serial fmt
 	gomake -C parallel fmt
-

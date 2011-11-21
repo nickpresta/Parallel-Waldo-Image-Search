@@ -2,7 +2,7 @@ include $(GOROOT)/src/Make.inc
 
 GOFMT=gofmt -w -tabindent -tabwidth=8
 
-TARG=wp
+TARG=../wp
 GOFILES=\
 	main.go\
 	wplib.go
@@ -10,7 +10,7 @@ GOFILES=\
 GC=6g -I../kmp/_obj
 LD=6l -L../kmp/_obj
 
-include $(GOROOT)/src/Make.pkg
+include $(GOROOT)/src/Make.cmd
 
 fmt:
 	${GOFMT} ${GOFILES}
