@@ -35,13 +35,11 @@ For (y,x,r) where (y,x) denotes the location in the image of the (unrotated) tem
 # How to Run
 
 ## Compile
-Since this includes the file *kmp.go*, you need to compile it first: `6g kmp.go`.
-
-The rest of this code uses the included tool `gomake`. To compile:
+To compile:
 
     gomake
 
-This will create a binary named wp.
+This will create a binary named wp, and wp\_s, corresponding to the parallel (uses goroutines/channels) and serial version of the same code.
 
 ## To Run
 To run `wp`:
