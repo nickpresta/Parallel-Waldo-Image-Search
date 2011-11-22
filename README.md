@@ -48,5 +48,9 @@ To run `wp`:
 
 This will spit the results to stdout.
 
+# Serial vs. Parallel
+I've included a version of the code that is effectively "serial". I decided to have different source code to keep things clean. Splitting the two versions is better than one version with a bunch of `if numProcs == 1 { dothis } else { do that }`.
+I use the serial version timings for the speedtime/efficiency graphs.
+
 # Credits
 I'm using the code from https://github.com/paddie/goKMP for KMP searching. Thanks!
